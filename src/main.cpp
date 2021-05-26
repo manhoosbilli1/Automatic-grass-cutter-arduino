@@ -45,7 +45,10 @@ int verAngle;
 int verInit = 0;
 int verPos1 = 150;
 int verPos2 = 0;
-
+int vertDiff;
+int absVertDiff;
+int absHorDiff;
+int horDiff;
 //-----//
 #define forward 1
 #define reverse 2
@@ -67,10 +70,10 @@ void setup()
 {
   Serial.begin(9600);
   s.begin(9600);
-  horServo.attach(9);
+  //horServo.attach(9);
   verServo.attach(3);
-  verServo.write(0); //go to default pos
-  horServo.write(0); //go to default pos
+  verServo.write(90); //go to default pos
+  horServo.write(90); //go to default pos
   pinMode(leftm1, OUTPUT);
   pinMode(leftm2, OUTPUT);
   pinMode(rightm1, OUTPUT);
@@ -89,8 +92,13 @@ void setup()
 
 void loop()
 {
-  ultrasonic1.read(); // Prints the distance on the default unit (centimeters)
   solarTrackerHandler();
+  /*
+  ultrasonic1.read(); // Prints the distance on the default unit (centimeters)
+  if (solarTrackingState == true)
+  {
+    solarTrackerHandler();
+  }
 
   if (s.available() > 0)
   {
@@ -159,7 +167,7 @@ void loop()
 
   case 'h': //decrease servo angle by 5
     verAngle = verServo.read();
-    verAngle = verAngle + 10;
+    verAngle = verAngle - 10;
     verServo.write(verAngle);
     break;
 
@@ -237,6 +245,7 @@ void loop()
       digitalWrite(rightm2, HIGH);
     }
   }
+  */
 }
 
 void readSensors()
@@ -283,48 +292,68 @@ void solarTrackerHandler()
   int botRegion = (ldrBotRight + ldrBotLeft) / 2;
   int leftRegion = (ldrTopLeft + ldrBotLeft) / 2;
   int rightRegion = (ldrTopRight + ldrBotRight) / 2;
-  /*
-  Serial.print("Top:");
-  Serial.print(topRegion);
-  Serial.print(" Bot:");
-  Serial.print(botRegion);
-  Serial.print(" Right:");
-  Serial.print(rightRegion);
-  Serial.print(" Left:");
-  Serial.println(leftRegion);
-*/
+
+  Serial.print("topLeft:");
+  Serial.print(ldrTopLeft);
+  Serial.print(" topRight:");
+  Serial.print(ldrTopRight);
+  Serial.print(" botLeft:");
+  Serial.print(ldrBotLeft);
+  Serial.print(" botRight:");
+  Serial.print(ldrBotRight);
   //difference of 300 when one side is fully  lit and the other is dark.. same for both regions
 
-  int vertDiff = topRegion - botRegion; //if difference is positive it will go upward other wise downward
-  int horDiff = leftRegion - rightRegion;
-  Serial.println(vertDiff);
-  if (vertDiff > 0 && vertDiff < 100)
+  vertDiff = botRegion - topRegion; //if difference is positive it will go upward other wise downward
+  horDiff = leftRegion - rightRegion;
+  absVertDiff = abs(vertDiff);
+  absHorDiff = abs(horDiff);
+
+  //vertical controller
+
+  if (absVertDiff > 0 && absVertDiff < 50)
   {
-    makeCorrection = false;
+    //do nothing
   }
-  else
-  {
-    makeCorrection = true;
-  }
-  if (vertDiff > -100 && vertDiff < 0)
-  {
-    makeCorrection = false;
-  }
-  else
-  {
-    makeCorrection = true;
-  }
-  if (vertDiff > 100 && makeCorrection == true)
-  {
-    //will go positive
-    verServo.read();
-    verAngle = verAngle + 10;
-    verServo.write(verAngle);
-  }
-  else if (vertDiff < -100 && makeCorrection == true)
+  else if (vertDiff > 0 && verAngle <= 178)
   {
     verServo.read();
-    verAngle = verAngle - 10;
+    verAngle = verAngle + 1;
     verServo.write(verAngle);
+    delay(10);
   }
+  else if (vertDiff < 0 && verAngle >= 0)
+  {
+    verAngle = verServo.read();
+    verAngle = verAngle - 1;
+    verServo.write(verAngle);
+    delay(10);
+  }
+
+  //horizontal controller
+
+  if (absVertDiff > 0 && absVertDiff < 50)
+  {
+    //do nothing
+  }
+  else if (vertDiff > 0 && verAngle <= 178)
+  {
+    verServo.read();
+    verAngle = verAngle + 5;
+    verServo.write(verAngle);
+    delay(2);
+  }
+  else if (vertDiff < 0 && verAngle >= 0)
+  {
+    verAngle = verServo.read();
+    verAngle = verAngle - 5;
+    verServo.write(verAngle);
+    delay(2);
+  }
+
+  Serial.print(" servoAngle: ");
+  Serial.print(verAngle);
+  Serial.print(" TopRegion: ");
+  Serial.print(topRegion);
+  Serial.print(" bottomRegion: ");
+  Serial.print(botRegion);
 }
