@@ -70,10 +70,10 @@ void setup()
 {
   Serial.begin(9600);
   s.begin(9600);
-  //horServo.attach(9);
+  horServo.attach(9);
   verServo.attach(3);
   verServo.write(90); //go to default pos
-  horServo.write(90); //go to default pos
+  horServo.write(0); //go to default pos
   pinMode(leftm1, OUTPUT);
   pinMode(leftm2, OUTPUT);
   pinMode(rightm1, OUTPUT);
@@ -292,7 +292,7 @@ void solarTrackerHandler()
   int botRegion = (ldrBotRight + ldrBotLeft) / 2;
   int leftRegion = (ldrTopLeft + ldrBotLeft) / 2;
   int rightRegion = (ldrTopRight + ldrBotRight) / 2;
-
+/*
   Serial.print("topLeft:");
   Serial.print(ldrTopLeft);
   Serial.print(" topRight:");
@@ -301,6 +301,7 @@ void solarTrackerHandler()
   Serial.print(ldrBotLeft);
   Serial.print(" botRight:");
   Serial.print(ldrBotRight);
+  */
   //difference of 300 when one side is fully  lit and the other is dark.. same for both regions
 
   vertDiff = botRegion - topRegion; //if difference is positive it will go upward other wise downward
@@ -331,29 +332,33 @@ void solarTrackerHandler()
 
   //horizontal controller
 
-  if (absVertDiff > 0 && absVertDiff < 50)
+  if (absHorDiff > 0 && absHorDiff < 50)
   {
     //do nothing
   }
-  else if (vertDiff > 0 && verAngle <= 178)
+  else if (horDiff > 0 && horAngle <= 178)
   {
-    verServo.read();
-    verAngle = verAngle + 5;
-    verServo.write(verAngle);
-    delay(2);
+    Serial.println("in 1st condition");
+    horServo.read();
+    horAngle = horAngle + 1;
+    horServo.write(horAngle);
+    delay(10);
   }
-  else if (vertDiff < 0 && verAngle >= 0)
+  else if (horDiff < 0 && horAngle >= 0)
   {
-    verAngle = verServo.read();
-    verAngle = verAngle - 5;
-    verServo.write(verAngle);
-    delay(2);
+    Serial.println("in 2nd condition");
+    horAngle = horServo.read();
+    horAngle = horAngle - 1;
+    horServo.write(horAngle);
+    delay(10);
   }
 
-  Serial.print(" servoAngle: ");
-  Serial.print(verAngle);
-  Serial.print(" TopRegion: ");
-  Serial.print(topRegion);
-  Serial.print(" bottomRegion: ");
-  Serial.print(botRegion);
+  Serial.print(" horAngle: ");
+  Serial.print(horAngle);
+  Serial.print(" LeftRegion: ");
+  Serial.print(leftRegion);
+  Serial.print(" rightRegion: ");
+  Serial.print(rightRegion);
+  Serial.print(" horDiff: ");
+  Serial.println(horDiff);
 }
