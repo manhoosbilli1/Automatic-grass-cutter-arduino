@@ -31,7 +31,7 @@ int ldrBotLeftDef;
 
 char result;
 bool automaticState = false;
-int turnDelay = 1000; //will change
+int turnDelay = 3000; //will change
 bool solarTrackingState = false;
 bool makeCorrection = false;
 //horizontal servo positions
@@ -73,7 +73,7 @@ void setup()
   horServo.attach(9);
   verServo.attach(3);
   verServo.write(90); //go to default pos
-  horServo.write(0); //go to default pos
+  horServo.write(0);  //go to default pos
   pinMode(leftm1, OUTPUT);
   pinMode(leftm2, OUTPUT);
   pinMode(rightm1, OUTPUT);
@@ -92,8 +92,11 @@ void setup()
 
 void loop()
 {
-  solarTrackerHandler();
-  /*
+  if (solarTrackingState == true)
+  {
+    solarTrackerHandler();
+  }
+
   ultrasonic1.read(); // Prints the distance on the default unit (centimeters)
   if (solarTrackingState == true)
   {
@@ -109,6 +112,13 @@ void loop()
       if (result != 'c' || result != 'd') //if result is not automatic on or if result is not automatic off then turn off automatic mode
       {
         automaticState = false; //if recieved char is something other than automatic then turn it off
+        solarTrackingState = false;
+        digitalWrite(cutterPin, HIGH); // turn cutter off.
+        digitalWrite(leftm1, LOW);
+        digitalWrite(leftm2, LOW);
+        digitalWrite(rightm1, LOW);
+        digitalWrite(rightm2, LOW);
+        //reset everything
       }
     }
   }
@@ -145,6 +155,11 @@ void loop()
   case 'd':
     automaticState = false;
     digitalWrite(LED_BUILTIN, LOW);
+    digitalWrite(leftm1, LOW);
+    digitalWrite(leftm2, LOW);
+    digitalWrite(rightm1, LOW);
+    digitalWrite(rightm2, LOW);
+    solarTrackingState = false;
     break;
 
   case 'e':
@@ -180,17 +195,18 @@ void loop()
     break;
 
   case 'k': //go left
-    digitalWrite(leftm1, HIGH);
-    digitalWrite(leftm2, LOW);
-    digitalWrite(rightm1, LOW);
-    digitalWrite(rightm2, HIGH);
-    break;
-
-  case 'l': //go right
     digitalWrite(leftm1, LOW);
     digitalWrite(leftm2, HIGH);
     digitalWrite(rightm1, HIGH);
     digitalWrite(rightm2, LOW);
+    break;
+
+  case 'l': //go right
+
+    digitalWrite(leftm1, HIGH);
+    digitalWrite(leftm2, LOW);
+    digitalWrite(rightm1, LOW);
+    digitalWrite(rightm2, HIGH);
     break;
 
   case 'm': //solar tracking on
@@ -205,15 +221,16 @@ void loop()
 
   if (automaticState == true)
   {
+    digitalWrite(cutterPin, LOW);
     solarTrackerHandler();
-    if (ultrasonic1.read() <= 15) //object detected
+    if (ultrasonic1.read() <= 20) //object detected
     {
       //stop the motors
       digitalWrite(leftm1, LOW);
       digitalWrite(leftm2, LOW);
       digitalWrite(rightm1, LOW);
       digitalWrite(rightm2, LOW);
-      delay(500); //stop delay
+      delay(1000); //stop delay
 
       //turn left
       //left side forward right side backward
@@ -223,21 +240,46 @@ void loop()
       digitalWrite(rightm2, HIGH);
       delay(turnDelay); //set delay based on experiment.
 
-      if (ultrasonic1.read() >= 15)
+      //stop
+      digitalWrite(leftm1, LOW);
+      digitalWrite(leftm2, LOW);
+      digitalWrite(rightm1, LOW);
+      digitalWrite(rightm2, LOW);
+      delay(1000); //stop delay
+
+      //forward
+
+      digitalWrite(leftm1, LOW);
+      digitalWrite(leftm2, HIGH);
+      digitalWrite(rightm1, LOW);
+      digitalWrite(rightm2, HIGH);
+
+      //check again.    if object detected go right so that you get 180 degree.
+      if (ultrasonic1.read() <= 20)
       {
-        //do nothing.
-      }
-      else
-      {
-        //go opposite or 180 degrees. so opposite motion but for longer delay
+        //stop and take go right one more time to get 180 degreee
         digitalWrite(leftm1, LOW);
-        digitalWrite(leftm2, HIGH);
-        digitalWrite(rightm1, HIGH);
+        digitalWrite(leftm2, LOW);
+        digitalWrite(rightm1, LOW);
         digitalWrite(rightm2, LOW);
-        delay((turnDelay * 2)); //will take 2x time to reach 180 degree
+        delay(1000);
+
+        //turn right
+        digitalWrite(leftm1, HIGH);
+        digitalWrite(leftm2, LOW);
+        digitalWrite(rightm1, LOW);
+        digitalWrite(rightm2, HIGH);
+        delay(turnDelay); //set delay based on experiment.
+
+        //STOP
+        digitalWrite(leftm1, LOW);
+        digitalWrite(leftm2, LOW);
+        digitalWrite(rightm1, LOW);
+        digitalWrite(rightm2, LOW);
+        delay(1000);
       }
     }
-    else
+    else   //IF OBJECT IS NOT DETECTED GO FORWARD
     {
       digitalWrite(leftm1, LOW);
       digitalWrite(leftm2, HIGH);
@@ -245,7 +287,6 @@ void loop()
       digitalWrite(rightm2, HIGH);
     }
   }
-  */
 }
 
 void readSensors()
@@ -292,7 +333,7 @@ void solarTrackerHandler()
   int botRegion = (ldrBotRight + ldrBotLeft) / 2;
   int leftRegion = (ldrTopLeft + ldrBotLeft) / 2;
   int rightRegion = (ldrTopRight + ldrBotRight) / 2;
-/*
+  /*
   Serial.print("topLeft:");
   Serial.print(ldrTopLeft);
   Serial.print(" topRight:");
